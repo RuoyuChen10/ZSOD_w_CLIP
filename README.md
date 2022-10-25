@@ -44,9 +44,13 @@ python zsd.py
 
 results:
 
-|F-22|Su-57|
-|--|--|
-|![](./results/F-22.jpg)|![](./results/Su-57.jpg)|
+|F-22|Su-57|MiG-29|
+|--|--|--|
+|![](./results/F-22.jpg)|![](./results/Su-57.jpg)|![](./results/MiG-29.jpg)|
+
+|M142_HIMARS|RQ-4_Global_Hawk|S-400|
+|--|--|--|
+|![](./results/M142_HIMARS.jpg)|![](./results/RQ-4_Global_Hawk.jpg)|![](./results/S-400.jpg)|
 
 # 3. Suggestions
 
