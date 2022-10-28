@@ -50,7 +50,7 @@ results:
 
 |M142_HIMARS|RQ-4_Global_Hawk|S-400|
 |--|--|--|
-|![](./results/M142_HIMARS.jpg)|![](./results/RQ-4_Global_Hawk.jpg)|![](./results/S-400.jpg)|
+|![](./results/M142_HIMARS.jpg)|![](./results/RQ-4_Global_Hawk.jpg)|![](./results/S400.jpg)|
 
 # 3. Suggestions
 

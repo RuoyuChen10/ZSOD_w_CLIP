@@ -115,18 +115,28 @@ def main():
     # image_path = "test-all/RQ-4_Global_Hawk/rq4_24.jpg"
     # image_path = "test-all/S-400/S400_5.jpg"
     # image_path = "test-all/Su-57/Su-57.png"
-    image_path = "images/F-22_1.png"
+    
+    # image_path = "images/F-22_1.png"
+    image_paths = [
+        "images/MiG-29.jpg",
+        "images/M142_HIMARS.jpg",
+        "images/RQ-4_Global_Hawk.jpg",
+        "images/S400.jpg"
+    ]
 
     # 初始化
     detector_model, clip_model, clip_preprocess, text, COLORS, description, classes = init()
 
-    # 零样本目标检测
-    detected_boxes, ids, scores = zsd_detector(detector_model, clip_model, clip_preprocess, text, image_path, threshold=threshold, use_nms = True)
-    
-    # 可视化
-    image_vis = visualization(image_path, detected_boxes, ids, scores, COLORS, classes)
+    for image_path in image_paths:
+        # 零样本目标检测
+        detected_boxes, ids, scores = zsd_detector(detector_model, clip_model, clip_preprocess, text, image_path, threshold=threshold, use_nms = True)
+        
+        # 可视化
+        image_vis = visualization(image_path, detected_boxes, ids, scores, COLORS, classes)
 
-    cv2.imwrite("result.jpg", image_vis)
+        height, width = image_vis.shape[:2]
+        image_vis = cv2.resize(image_vis, (400, int(400/width*height)), interpolation=cv2.INTER_CUBIC)
+        cv2.imwrite(image_path.replace("images", "results"), image_vis)
 
 if __name__ == "__main__":
     main()
