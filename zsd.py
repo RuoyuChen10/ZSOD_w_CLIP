@@ -7,7 +7,7 @@ from mmdet.core.post_processing import fast_nms, multiclass_nms
 
 from utils import *
 
-def zsd_detector(detector_model, clip_model, clip_preprocess, text, image_path, threshold=0.3, use_nms = True, score_thr=0.05, iou_threshold=0.5):
+def zsd_detector(detector_model, clip_model, clip_preprocess, text, image_path, threshold=0.3, use_nms = True, score_thr=0.05, iou_threshold=0.4):
     """零样本检测器
 
     Args:
@@ -112,9 +112,10 @@ def main():
     # image_path = "test-all/Littoral_Combat_Ship/LCS_223.jpg"
     # image_path = "test-all/M142_HIMARS/M142_2.jpg"
     # image_path = "test-all/MiG-29/mig29_15.jpg"
-    image_path = "test-all/RQ-4_Global_Hawk/rq4_24.jpg"
+    # image_path = "test-all/RQ-4_Global_Hawk/rq4_24.jpg"
     # image_path = "test-all/S-400/S400_5.jpg"
     # image_path = "test-all/Su-57/Su-57.png"
+    image_path = "images/F-22_1.png"
 
     # 初始化
     detector_model, clip_model, clip_preprocess, text, COLORS, description, classes = init()
