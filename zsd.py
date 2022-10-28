@@ -51,26 +51,26 @@ def zsd_detector(detector_model, clip_model, clip_preprocess, text, image_path, 
             probs = logits_per_image.softmax(dim=-1).cpu().numpy()
         ids.append(probs.argmax())
         max_scores.append(probs.max())
-        # 最后一类为背景类
+        # 最后一类为背景类，需要编码进去
         one_hot = np.zeros(len(text)+1)
         one_hot[probs.argmax()] = 1
         one_hot[:-1] = probs[0] * one_hot[:-1]
         all_scores.append(one_hot)
 
-    if use_nms and len(ids) != 0: # 使用NMS去除重复的框
+    if use_nms and len(ids) != 0: # 使用NMS去除重复的框，但是相同类物体不同描述不能视为同一物体。
         det_bboxes, det_labels = multiclass_nms(
             torch.Tensor(detected_boxes).to(device), 
             torch.Tensor(all_scores).to(device), 
             score_thr = score_thr, 
             nms_cfg = dict(type='nms', iou_threshold = iou_threshold),
             max_num = 100)
-
+        # 重写检测框等
         detected_boxes = det_bboxes[:,:4].cpu().numpy().astype(int)
-        max_scores = det_bboxes[:,4]
         ids = det_labels.cpu().numpy()
+        max_scores = det_bboxes[:,4].cpu().numpy()
         
         return detected_boxes, ids, max_scores
-        
+    # 此处返回的是无NMS处理的检测框
     return detected_boxes, ids, max_scores
 
 def visualization(image_path, detected_boxes, ids, scores, COLORS, classes):
@@ -79,7 +79,7 @@ def visualization(image_path, detected_boxes, ids, scores, COLORS, classes):
     img = cv2.imread(image_path)
     if len(scores) == 0:
         return img
-
+    # 通过图片大小调整框的粗细与字体的大小
     height, width = img.shape[:2]
 
     for box, class_id, score in zip(detected_boxes, ids, scores):
