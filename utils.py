@@ -3,6 +3,7 @@ import numpy as np
 import os
 
 from mmdet.apis import init_detector, inference_detector
+from mmcv import Config
 import clip
 
 config_file = 'configs/faster_rcnn/faster_rcnn_r50_fpn_1x_coco.py'
@@ -12,7 +13,9 @@ checkpoint_file = 'checkpoints/faster_rcnn_r50_fpn_1x_coco_20200130-047c8118.pth
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 threshold=0.5
-eval_threshold = 0.35
+eval_threshold = 0.2
+
+cfg = Config.fromfile(config_file)
 
 def init():
     # 初始化检测器

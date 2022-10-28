@@ -3,9 +3,11 @@ import cv2
 import numpy as np
 from PIL import Image
 
+from mmdet.core.post_processing import fast_nms, multiclass_nms
+
 from utils import *
 
-def zsd_detector(detector_model, clip_model, clip_preprocess, text, image_path, threshold=0.5):
+def zsd_detector(detector_model, clip_model, clip_preprocess, text, image_path, threshold=0.3, use_nms = True, score_thr=0.05, iou_threshold=0.5):
     """零样本检测器
 
     Args:
@@ -35,7 +37,8 @@ def zsd_detector(detector_model, clip_model, clip_preprocess, text, image_path, 
 
     # 零样本检测
     ids = [] # 每个检测框预测结果
-    scores = [] # 每个检测结果的分数
+    max_scores = [] # 每个检测结果的分数
+    all_scores = [] # 检测分数one-hot向量
     image = Image.open(image_path)
     for i in range(len(detected_boxes)):
         ## 剪切
@@ -47,11 +50,30 @@ def zsd_detector(detector_model, clip_model, clip_preprocess, text, image_path, 
             logits_per_image, logits_per_text = clip_model(clip_input, text)
             probs = logits_per_image.softmax(dim=-1).cpu().numpy()
         ids.append(probs.argmax())
-        scores.append(probs.max())
-        
-    return detected_boxes, ids, scores
+        max_scores.append(probs.max())
+        # 最后一类为背景类
+        one_hot = np.zeros(len(text)+1)
+        one_hot[probs.argmax()] = 1
+        one_hot[:-1] = probs[0] * one_hot[:-1]
+        all_scores.append(one_hot)
 
-def visualization(image_path, detected_boxes, ids, scores, COLORS, description):
+    if use_nms and len(ids) != 0: # 使用NMS去除重复的框
+        det_bboxes, det_labels = multiclass_nms(
+            torch.Tensor(detected_boxes).to(device), 
+            torch.Tensor(all_scores).to(device), 
+            score_thr = score_thr, 
+            nms_cfg = dict(type='nms', iou_threshold = iou_threshold),
+            max_num = 100)
+
+        detected_boxes = det_bboxes[:,:4].cpu().numpy().astype(int)
+        max_scores = det_bboxes[:,4]
+        ids = det_labels.cpu().numpy()
+        
+        return detected_boxes, ids, max_scores
+        
+    return detected_boxes, ids, max_scores
+
+def visualization(image_path, detected_boxes, ids, scores, COLORS, classes):
     """可视化框
     """
     img = cv2.imread(image_path)
@@ -65,7 +87,7 @@ def visualization(image_path, detected_boxes, ids, scores, COLORS, description):
         # 画框
         image_tmp = cv2.rectangle(img, (x1,y1), (x2,y2), COLORS[class_id], int(width/112))
         # 标签
-        label = description[class_id]
+        label = classes[class_id]
         # 类别标签
         cv2.putText(image_tmp, label+": "+"%.2f"%(score*100)+"%", (x1, y1-5), cv2.FONT_HERSHEY_SIMPLEX, 0.8, COLORS[class_id], 2)
     return image_tmp
@@ -87,10 +109,10 @@ def main():
     # image_path = "test-all/E2/E2_13.jpg"
     # image_path = "test-all/F-16/f16_85.jpg"
     # image_path = "test-all/F-22/f22_20.jpg"
-    image_path = "test-all/Littoral_Combat_Ship/LCS_223.jpg"
+    # image_path = "test-all/Littoral_Combat_Ship/LCS_223.jpg"
     # image_path = "test-all/M142_HIMARS/M142_2.jpg"
     # image_path = "test-all/MiG-29/mig29_15.jpg"
-    # image_path = "test-all/RQ-4_Global_Hawk/rq4_24.jpg"
+    image_path = "test-all/RQ-4_Global_Hawk/rq4_24.jpg"
     # image_path = "test-all/S-400/S400_5.jpg"
     # image_path = "test-all/Su-57/Su-57.png"
 
@@ -98,7 +120,7 @@ def main():
     detector_model, clip_model, clip_preprocess, text, COLORS, description, classes = init()
 
     # 零样本目标检测
-    detected_boxes, ids, scores = zsd_detector(detector_model, clip_model, clip_preprocess, text, image_path, threshold=threshold)
+    detected_boxes, ids, scores = zsd_detector(detector_model, clip_model, clip_preprocess, text, image_path, threshold=threshold, use_nms = True)
     
     # 可视化
     image_vis = visualization(image_path, detected_boxes, ids, scores, COLORS, classes)
